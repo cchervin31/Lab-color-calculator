@@ -100,6 +100,7 @@
             background: #f8f9fa;
             border-radius: 15px;
             display: none;
+            position: relative;
         }
 
         .results.show {
@@ -118,6 +119,16 @@
             }
         }
 
+        .results-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .results-content {
+            flex: 1;
+        }
+
         .result-item {
             margin-bottom: 15px;
             padding-bottom: 15px;
@@ -128,6 +139,10 @@
             margin-bottom: 0;
             padding-bottom: 0;
             border-bottom: none;
+        }
+
+        .result-content {
+            flex: 1;
         }
 
         .result-label {
@@ -142,6 +157,35 @@
             font-size: 24px;
             font-weight: 700;
             color: #333;
+        }
+
+        .color-preview {
+            width: 160px;
+            height: 160px;
+            border-radius: 15px;
+            border: 4px solid #ddd;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        .color-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        .footnote {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff9e6;
+            border-left: 3px solid #ffc107;
+            border-radius: 5px;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.5;
         }
 
         .unit {
@@ -184,24 +228,95 @@
         <button class="calculate-btn" onclick="calculateValues()">Calculate</button>
 
         <div class="results" id="results">
-            <div class="result-item">
-                <div class="result-label">Chroma (C*)</div>
-                <div class="result-value" id="chroma-result">--</div>
+            <div class="results-wrapper">
+                <div class="results-content">
+                    <div class="result-item">
+                        <div class="result-content">
+                            <div class="result-label">Chroma (C*)</div>
+                            <div class="result-value" id="chroma-result">--</div>
+                        </div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-content">
+                            <div class="result-label">Hue Angle (h°)</div>
+                            <div class="result-value" id="hue-result">--<span class="unit">°</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="color-preview" id="color-preview"></div>
             </div>
-            <div class="result-item">
-                <div class="result-label">Hue Angle (h°)</div>
-                <div class="result-value" id="hue-result">--<span class="unit">°</span></div>
+            <div class="color-info">
+                <strong>RGB values:</strong> <span id="rgb-values">--</span>
+            </div>
+            <div class="footnote">
+                <strong>Note:</strong> Color conversion uses the CIE L*a*b* to sRGB transformation with D65 illuminant (standard daylight). The displayed color is an approximation and may vary depending on your screen calibration.<br>
+                <em>Reference: CIE 1976 L*a*b* color space (CIELAB) - ISO/CIE 11664-4:2019</em>
             </div>
         </div>
 
         <div class="info">
             <strong>Formulas:</strong><br>
             • Chroma = √(a² + b²)<br>
-            • Hue Angle = ATAN2(b, a) converted to degrees [0-360°]
+            • Hue Angle = ATAN2(a, b) converted to degrees [0-360°]<br>
+            <em style="font-size: 11px; color: #777;">Note: Excel ATAN2(a,b) = JavaScript atan2(b,a)</em>
         </div>
     </div>
 
     <script>
+        // Lab to RGB conversion functions
+        function labToXyz(l, a, b) {
+            // Convert Lab to XYZ (D65 illuminant)
+            let y = (l + 16) / 116;
+            let x = a / 500 + y;
+            let z = y - b / 200;
+
+            const delta = 6 / 29;
+            const deltaSquared = delta * delta;
+            const deltaCubed = delta * delta * delta;
+
+            x = x > delta ? Math.pow(x, 3) : 3 * deltaSquared * (x - 4/29);
+            y = y > delta ? Math.pow(y, 3) : 3 * deltaSquared * (y - 4/29);
+            z = z > delta ? Math.pow(z, 3) : 3 * deltaSquared * (z - 4/29);
+
+            // D65 illuminant reference white
+            x *= 0.95047;
+            y *= 1.00000;
+            z *= 1.08883;
+
+            return [x, y, z];
+        }
+
+        function xyzToRgb(x, y, z) {
+            // Convert XYZ to linear RGB
+            let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+            let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+            let b = x *  0.0557 + y * -0.2040 + z *  1.0570;
+
+            // Apply gamma correction (sRGB)
+            const gammaCorrect = (c) => {
+                if (c <= 0.0031308) {
+                    return 12.92 * c;
+                }
+                return 1.055 * Math.pow(c, 1/2.4) - 0.055;
+            };
+
+            r = gammaCorrect(r);
+            g = gammaCorrect(g);
+            b = gammaCorrect(b);
+
+            // Clamp and convert to 0-255
+            r = Math.max(0, Math.min(1, r)) * 255;
+            g = Math.max(0, Math.min(1, g)) * 255;
+            b = Math.max(0, Math.min(1, b)) * 255;
+
+            return [Math.round(r), Math.round(g), Math.round(b)];
+        }
+
+        function labToRgb(l, a, b) {
+            const [x, y, z] = labToXyz(l, a, b);
+            return xyzToRgb(x, y, z);
+        }
+
         function calculateValues() {
             // Get input values
             const L = parseFloat(document.getElementById('l-value').value);
@@ -214,11 +329,15 @@
                 return;
             }
 
+            // Check that L is valid (use 50 as default if not provided)
+            const lValue = isNaN(L) ? 50 : L;
+
             // Calculate Chroma: √(a² + b²)
             const chroma = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
 
             // Calculate Hue Angle
-            // ATAN2(b, a) returns an angle in radians between -π and π
+            // Note: Excel's ATAN2(x,y) is equivalent to JavaScript's Math.atan2(y,x)
+            // So ATAN2(a,b) in Excel = Math.atan2(b,a) in JavaScript
             let hueRadians = Math.atan2(b, a);
             
             // Convert to degrees
@@ -229,9 +348,19 @@
                 hueDegrees = 360 + hueDegrees;
             }
 
+            // Convert Lab to RGB for color preview
+            const [r, g, b_rgb] = labToRgb(lValue, a, b);
+
             // Display results
             document.getElementById('chroma-result').textContent = chroma.toFixed(2);
             document.getElementById('hue-result').innerHTML = hueDegrees.toFixed(2) + '<span class="unit">°</span>';
+            
+            // Display color preview
+            const colorPreview = document.getElementById('color-preview');
+            colorPreview.style.backgroundColor = `rgb(${r}, ${g}, ${b_rgb})`;
+            
+            // Display RGB values
+            document.getElementById('rgb-values').textContent = `R: ${r}, G: ${g}, B: ${b_rgb}`;
             
             // Show results section
             document.getElementById('results').classList.add('show');
