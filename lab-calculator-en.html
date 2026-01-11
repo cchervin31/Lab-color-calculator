@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Calculator - Chroma and Hue Angle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .unit {
+            font-size: 16px;
+            color: #888;
+            margin-left: 5px;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lab Calculator</h1>
+        <p class="subtitle">CIE L*a*b* Color Space</p>
+
+        <div class="input-group">
+            <label for="l-value">L* (Lightness)</label>
+            <input type="number" id="l-value" placeholder="Enter L* value (0-100)" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label for="a-value">a* (Green ← → Red)</label>
+            <input type="number" id="a-value" placeholder="Enter a* value" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label for="b-value">b* (Blue ← → Yellow)</label>
+            <input type="number" id="b-value" placeholder="Enter b* value" step="0.01">
+        </div>
+
+        <button class="calculate-btn" onclick="calculateValues()">Calculate</button>
+
+        <div class="results" id="results">
+            <div class="result-item">
+                <div class="result-label">Chroma (C*)</div>
+                <div class="result-value" id="chroma-result">--</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Hue Angle (h°)</div>
+                <div class="result-value" id="hue-result">--<span class="unit">°</span></div>
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>Formulas:</strong><br>
+            • Chroma = √(a² + b²)<br>
+            • Hue Angle = ATAN2(a, b) converted to degrees [0-360°]
+        </div>
+    </div>
+
+    <script>
+        function calculateValues() {
+            // Get input values
+            const L = parseFloat(document.getElementById('l-value').value);
+            const a = parseFloat(document.getElementById('a-value').value);
+            const b = parseFloat(document.getElementById('b-value').value);
+
+            // Check that a and b are valid numbers
+            if (isNaN(a) || isNaN(b)) {
+                alert('Please enter valid values for a* and b*');
+                return;
+            }
+
+            // Calculate Chroma: √(a² + b²)
+            const chroma = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+
+            // Calculate Hue Angle
+            // ATAN2(a, b) returns an angle in radians between -π and π
+            let hueRadians = Math.atan2(a, b);
+            
+            // Convert to degrees
+            let hueDegrees = hueRadians * 180 / Math.PI;
+            
+            // If negative, add 360 to get an angle between 0 and 360
+            if (hueDegrees < 0) {
+                hueDegrees = 360 + hueDegrees;
+            }
+
+            // Display results
+            document.getElementById('chroma-result').textContent = chroma.toFixed(2);
+            document.getElementById('hue-result').innerHTML = hueDegrees.toFixed(2) + '<span class="unit">°</span>';
+            
+            // Show results section
+            document.getElementById('results').classList.add('show');
+        }
+
+        // Allow calculation with Enter key
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    calculateValues();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
