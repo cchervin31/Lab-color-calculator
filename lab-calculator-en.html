@@ -197,7 +197,7 @@
         <div class="info">
             <strong>Formulas:</strong><br>
             • Chroma = √(a² + b²)<br>
-            • Hue Angle = ATAN2(a, b) converted to degrees [0-360°]
+            • Hue Angle = ATAN2(b, a) converted to degrees [0-360°]
         </div>
     </div>
 
@@ -219,7 +219,7 @@
 
             // Calculate Hue Angle
             // ATAN2(a, b) returns an angle in radians between -π and π
-            let hueRadians = Math.atan2(a, b);
+            let hueRadians = Math.atan2(b, a);
             
             // Convert to degrees
             let hueDegrees = hueRadians * 180 / Math.PI;
