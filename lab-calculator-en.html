@@ -214,6 +214,11 @@
             background: #fafafa;
             border-radius: 5px;
         }
+
+        .visitor-badge {
+            display: inline-block;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -273,9 +278,10 @@
         </div>
 
         <div class="stats-footer">
-            <span id="visitor-count">📊 Page visits: <span id="visit-number">...</span></span>
-            <span style="margin-left: 15px; color: #ccc;">|</span>
-            <span style="margin-left: 15px;">Last updated: <span id="last-update">...</span></span>
+            <div>📊 Page visits</div>
+            <div class="visitor-badge">
+                <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fcchervin31.github.io%2FLab-color-calculator%2Flab-calculator-en.html&count_bg=%23667EEA&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=visits&edge_flat=false" alt="Visitor count">
+            </div>
         </div>
     </div>
 
@@ -391,52 +397,6 @@
                 }
             });
         });
-
-        // Visitor counter with 12-hour update cycle
-        function updateVisitorCount() {
-            const TWELVE_HOURS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
-            
-            // Get stored data
-            let visitData = localStorage.getItem('labCalcVisits');
-            let currentTime = new Date().getTime();
-            
-            if (!visitData) {
-                // First visit
-                visitData = {
-                    count: 1,
-                    lastUpdate: currentTime
-                };
-            } else {
-                visitData = JSON.parse(visitData);
-                
-                // Check if 12 hours have passed since last update
-                if (currentTime - visitData.lastUpdate >= TWELVE_HOURS) {
-                    visitData.count += 1;
-                    visitData.lastUpdate = currentTime;
-                }
-            }
-            
-            // Save updated data
-            localStorage.setItem('labCalcVisits', JSON.stringify(visitData));
-            
-            // Display count
-            document.getElementById('visit-number').textContent = visitData.count;
-            
-            // Display last update time
-            const lastUpdateDate = new Date(visitData.lastUpdate);
-            const options = { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            };
-            document.getElementById('last-update').textContent = 
-                lastUpdateDate.toLocaleDateString('en-US', options);
-        }
-        
-        // Run counter on page load
-        updateVisitorCount();
     </script>
 </body>
 </html>
