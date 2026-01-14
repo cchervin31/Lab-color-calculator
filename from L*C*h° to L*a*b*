@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCh to Lab Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+            position: relative;
+        }
+
+        .results.show {
+            display: block;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .results-content {
+            flex: 1;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .result-content {
+            flex: 1;
+        }
+
+        .result-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .color-preview {
+            width: 160px;
+            height: 160px;
+            border-radius: 15px;
+            border: 4px solid #ddd;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        .color-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        .footnote {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff9e6;
+            border-left: 3px solid #ffc107;
+            border-radius: 5px;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LCh to L*a*b* Calculator</h1>
+        <p class="subtitle">Convert Cylindrical to Cartesian Coordinates</p>
+        <p class="subtitle" style="margin-top: -15px; margin-bottom: 20px;">
+            For L*a*b* to LCh conversion, please <a href="https://cchervin31.github.io/Lab-color-calculator/lab-calculator-en.html" style="color: #667eea; text-decoration: none; font-weight: 600;">click here</a>.
+        </p>
+
+        <div class="input-group">
+            <label for="l-value">L* (Lightness)</label>
+            <input type="number" id="l-value" placeholder="Enter L* value (0-100)" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label for="c-value">C* (Chroma)</label>
+            <input type="number" id="c-value" placeholder="Enter C* value" step="0.01" min="0">
+        </div>
+
+        <div class="input-group">
+            <label for="h-value">h° (Hue Angle)</label>
+            <input type="number" id="h-value" placeholder="Enter h° value (0-360)" step="0.01" min="0" max="360">
+        </div>
+
+        <button class="calculate-btn" onclick="calculateValues()">Calculate</button>
+
+        <div class="results" id="results">
+            <div class="results-wrapper">
+                <div class="results-content">
+                    <div class="result-item">
+                        <div class="result-content">
+                            <div class="result-label">a* (Green ← → Red)</div>
+                            <div class="result-value" id="a-result">--</div>
+                        </div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-content">
+                            <div class="result-label">b* (Blue ← → Yellow)</div>
+                            <div class="result-value" id="b-result">--</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="color-preview" id="color-preview"></div>
+            </div>
+            <div class="color-info">
+                <strong>RGB values:</strong> <span id="rgb-values">--</span>
+            </div>
+            <div class="footnote">
+                <strong>Note:</strong> Color conversion uses the CIE L*a*b* to sRGB transformation with D65 illuminant (standard daylight). The displayed color is an approximation and may vary depending on your screen calibration.<br>
+                <em>Reference: CIE 1976 L*a*b* color space (CIELAB) - ISO/CIE 11664-4:2019</em>
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>Formulas:</strong><br>
+            • a* = C* × cos(h° in radians)<br>
+            • b* = C* × sin(h° in radians)<br>
+            <em style="font-size: 11px; color: #777;">Note: Hue angle must be converted from degrees to radians</em>
+        </div>
+    </div>
+
+    <script>
+        // Lab to RGB conversion functions
+        function labToXyz(l, a, b) {
+            // Convert Lab to XYZ (D65 illuminant)
+            let y = (l + 16) / 116;
+            let x = a / 500 + y;
+            let z = y - b / 200;
+
+            const delta = 6 / 29;
+            const deltaSquared = delta * delta;
+
+            x = x > delta ? Math.pow(x, 3) : 3 * deltaSquared * (x - 4/29);
+            y = y > delta ? Math.pow(y, 3) : 3 * deltaSquared * (y - 4/29);
+            z = z > delta ? Math.pow(z, 3) : 3 * deltaSquared * (z - 4/29);
+
+            // D65 illuminant reference white
+            x *= 0.95047;
+            y *= 1.00000;
+            z *= 1.08883;
+
+            return [x, y, z];
+        }
+
+        function xyzToRgb(x, y, z) {
+            // Convert XYZ to linear RGB
+            let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+            let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+            let b = x *  0.0557 + y * -0.2040 + z *  1.0570;
+
+            // Apply gamma correction (sRGB)
+            const gammaCorrect = (c) => {
+                if (c <= 0.0031308) {
+                    return 12.92 * c;
+                }
+                return 1.055 * Math.pow(c, 1/2.4) - 0.055;
+            };
+
+            r = gammaCorrect(r);
+            g = gammaCorrect(g);
+            b = gammaCorrect(b);
+
+            // Clamp and convert to 0-255
+            r = Math.max(0, Math.min(1, r)) * 255;
+            g = Math.max(0, Math.min(1, g)) * 255;
+            b = Math.max(0, Math.min(1, b)) * 255;
+
+            return [Math.round(r), Math.round(g), Math.round(b)];
+        }
+
+        function labToRgb(l, a, b) {
+            const [x, y, z] = labToXyz(l, a, b);
+            return xyzToRgb(x, y, z);
+        }
+
+        function calculateValues() {
+            // Get input values
+            const L = parseFloat(document.getElementById('l-value').value);
+            const C = parseFloat(document.getElementById('c-value').value);
+            const h = parseFloat(document.getElementById('h-value').value);
+
+            // Check that C and h are valid numbers
+            if (isNaN(C) || isNaN(h)) {
+                alert('Please enter valid values for C* and h°');
+                return;
+            }
+
+            // Check that L is valid (use 50 as default if not provided)
+            const lValue = isNaN(L) ? 50 : L;
+
+            // Convert hue angle from degrees to radians
+            const hRadians = h * Math.PI / 180;
+
+            // Calculate a* and b* from LCh
+            // a* = C* × cos(h)
+            // b* = C* × sin(h)
+            const a = C * Math.cos(hRadians);
+            const b = C * Math.sin(hRadians);
+
+            // Convert Lab to RGB for color preview
+            const [r, g, b_rgb] = labToRgb(lValue, a, b);
+
+            // Display results
+            document.getElementById('a-result').textContent = a.toFixed(2);
+            document.getElementById('b-result').textContent = b.toFixed(2);
+            
+            // Display color preview
+            const colorPreview = document.getElementById('color-preview');
+            colorPreview.style.backgroundColor = `rgb(${r}, ${g}, ${b_rgb})`;
+            
+            // Display RGB values
+            document.getElementById('rgb-values').textContent = `R: ${r}, G: ${g}, B: ${b_rgb}`;
+            
+            // Show results section
+            document.getElementById('results').classList.add('show');
+        }
+
+        // Allow calculation with Enter key
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    calculateValues();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
