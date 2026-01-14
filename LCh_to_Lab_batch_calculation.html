@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Large Batch of L*a*b* Calculation from LCh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f0ff;
+            --secondary: #ff00ea;
+            --bg-dark: #0a0e27;
+            --bg-card: #151b3d;
+            --text-light: #e0e7ff;
+            --text-muted: #8b92b8;
+            --success: #00ff9f;
+            --error: #ff4757;
+            --border: #2d3561;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 234, 0.1) 0%, transparent 50%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-top: 40px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.5));
+            }
+            to {
+                filter: drop-shadow(0 0 30px rgba(255, 0, 234, 0.5));
+            }
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .upload-section {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 240, 255, 0.05), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .upload-zone {
+            position: relative;
+            border: 3px dashed var(--primary);
+            border-radius: 15px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 240, 255, 0.03);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--secondary);
+            background: rgba(255, 0, 234, 0.05);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--success);
+            background: rgba(0, 255, 159, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--bg-dark);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background: rgba(0, 240, 255, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .results-section {
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(255, 0, 234, 0.2));
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .download-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .error-message {
+            background: rgba(255, 71, 87, 0.1);
+            border-left: 4px solid var(--error);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            color: var(--error);
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .upload-section {
+                padding: 20px;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LCh to L*a*b* Batch Converter</h1>
+            <p class="subtitle">Reverse Calculation Processor</p>
+        </header>
+
+        <div class="upload-section">
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">🔄</div>
+                <div class="upload-text">Drop your CSV file here or click to browse</div>
+                <div class="upload-hint">Maximum 100 rows • Format: Code;L;C;h</div>
+            </div>
+            <input type="file" id="fileInput" accept=".csv">
+            
+            <div class="info-box">
+                <strong>CSV Format Requirements:</strong>
+                • Separator: semicolon (;)<br>
+                • Decimal: comma (,) or period (.)<br>
+                • Headers: Code;L;C;h<br>
+                • Hue Angle (h): in degrees (0-360°)<br>
+                • Example: SAMPLE001;75.5;35.2;85.4
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <div>Processing your data...</div>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="rowCount">0</div>
+                <div class="stat-label">Samples Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgA">0.00</div>
+                <div class="stat-label">Average a*</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgB">0.00</div>
+                <div class="stat-label">Average b*</div>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="table-container">
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>L*</th>
+                            <th>C*</th>
+                            <th>h° (Hue)</th>
+                            <th>a*</th>
+                            <th>b*</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="download-section">
+                <button class="btn" onclick="downloadResults()">
+                    ⬇ Download Results (CSV)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let processedData = [];
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadZone = document.getElementById('uploadZone');
+        const errorMessage = document.getElementById('errorMessage');
+        const loader = document.getElementById('loader');
+        const resultsSection = document.getElementById('resultsSection');
+        const stats = document.getElementById('stats');
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.csv')) {
+                showError('Please upload a CSV file');
+                return;
+            }
+
+            loader.classList.add('show');
+            resultsSection.classList.remove('show');
+            stats.style.display = 'none';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    processCSV(e.target.result);
+                } catch (error) {
+                    showError('Error processing file: ' + error.message);
+                    loader.classList.remove('show');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function processCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            
+            if (lines.length < 2) {
+                showError('CSV file must contain at least a header and one data row');
+                loader.classList.remove('show');
+                return;
+            }
+
+            if (lines.length > 101) {
+                showError('Maximum 100 data rows allowed (excluding header)');
+                loader.classList.remove('show');
+                return;
+            }
+
+            // Parse CSV
+            const data = [];
+            const header = lines[0].toLowerCase();
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const values = line.split(';');
+                
+                if (values.length < 4) {
+                    showError(`Row ${i}: Invalid format. Expected 4 columns (Code;L;C;h)`);
+                    loader.classList.remove('show');
+                    return;
+                }
+
+                const code = values[0].trim();
+                const L = parseFloat(values[1].replace(',', '.'));
+                const C = parseFloat(values[2].replace(',', '.'));
+                const h = parseFloat(values[3].replace(',', '.'));
+
+                if (isNaN(L) || isNaN(C) || isNaN(h)) {
+                    showError(`Row ${i}: Invalid numeric values`);
+                    loader.classList.remove('show');
+                    return;
+                }
+
+                // Convert hue angle from degrees to radians
+                const hRadians = h * Math.PI / 180;
+
+                // Calculate a* and b* from LCh
+                // a* = C* × cos(h)
+                // b* = C* × sin(h)
+                const a = C * Math.cos(hRadians);
+                const b = C * Math.sin(hRadians);
+
+                data.push({
+                    code,
+                    L: L.toFixed(2),
+                    C: C.toFixed(2),
+                    h: h.toFixed(2),
+                    a: a.toFixed(2),
+                    b: b.toFixed(2)
+                });
+            }
+
+            processedData = data;
+            displayResults(data);
+            loader.classList.remove('show');
+        }
+
+        function displayResults(data) {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.code}</td>
+                    <td>${row.L}</td>
+                    <td>${row.C}</td>
+                    <td>${row.h}</td>
+                    <td>${row.a}</td>
+                    <td>${row.b}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Calculate statistics
+            const avgA = data.reduce((sum, row) => sum + parseFloat(row.a), 0) / data.length;
+            const avgB = data.reduce((sum, row) => sum + parseFloat(row.b), 0) / data.length;
+
+            document.getElementById('rowCount').textContent = data.length;
+            document.getElementById('avgA').textContent = avgA.toFixed(2);
+            document.getElementById('avgB').textContent = avgB.toFixed(2);
+
+            stats.style.display = 'grid';
+            resultsSection.classList.add('show');
+        }
+
+        function downloadResults() {
+            if (processedData.length === 0) {
+                showError('No data to download');
+                return;
+            }
+
+            let csv = 'Code;L;C;h;a;b\n';
+            processedData.forEach(row => {
+                csv += `${row.code};${row.L};${row.C};${row.h};${row.a};${row.b}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'lch_to_lab_results.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
